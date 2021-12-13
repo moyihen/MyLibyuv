@@ -11,4 +11,10 @@
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="a_">12321</string>
+    <string name="function_str_1">yuv</string>
+    <string name="function_str_2">自定义进度条</string>
+    <string name="function_str_3">行星自转效果</string>
+    <string name="function_str_4">烟花</string>
+    <string name="function_str_5">camerax自定义裁剪</string>
 </resources>

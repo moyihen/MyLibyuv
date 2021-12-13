@@ -19,7 +19,7 @@
     <androidx.camera.view.PreviewView
         android:id="@+id/preview"
         android:layout_width="0dp"
-        android:layout_height="200dp"
+        android:layout_height="300dp"
         android:layout_margin="2dp"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -29,7 +29,7 @@
     <ImageView
         android:id="@+id/img"
         android:layout_width="0dp"
-        android:layout_height="200dp"
+        android:layout_height="300dp"
         android:layout_margin="2dp"
         android:scaleType="centerCrop"
         app:layout_constraintHorizontal_weight="1"
@@ -40,7 +40,7 @@
     <ImageView
         android:id="@+id/img_2"
         android:layout_width="0dp"
-        android:layout_height="200dp"
+        android:layout_height="300dp"
         android:layout_margin="2dp"
         android:scaleType="centerCrop"
         app:layout_constraintHorizontal_weight="1"
@@ -51,7 +51,7 @@
     <ImageView
         android:id="@+id/img_3"
         android:layout_width="0dp"
-        android:layout_height="200dp"
+        android:layout_height="300dp"
         android:layout_margin="2dp"
         android:scaleType="centerCrop"
         app:layout_constraintHorizontal_weight="1"

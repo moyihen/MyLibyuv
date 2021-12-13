@@ -2,31 +2,22 @@ package com.moyihen.mylibyuv;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.ImageFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
-import android.view.View;
+import android.view.Surface;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.CameraX;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
-import androidx.camera.core.impl.ImageOutputConfig;
 import androidx.camera.core.impl.utils.executor.CameraXExecutors;
 import androidx.camera.core.internal.utils.ImageUtil;
-import androidx.camera.extensions.BokehImageCaptureExtender;
-import androidx.camera.extensions.HdrImageCaptureExtender;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.content.ContextCompat;
 
@@ -37,9 +28,8 @@ import com.hjq.permissions.XXPermissions;
 import com.moyihen.libyuv.YUVUtils;
 import com.moyihen.mylibyuv.databinding.ActivityMainBinding;
 
-import java.io.ByteArrayOutputStream;
+
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -51,7 +41,9 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding mBinding;
     private ImageCapture mImageCapture;
     private String mPath;
-    private CameraSelector camera_mode = CameraSelector.DEFAULT_BACK_CAMERA;
+    // private CameraSelector camera_mode = CameraSelector.DEFAULT_BACK_CAMERA;
+    private CameraSelector camera_mode = CameraSelector.DEFAULT_FRONT_CAMERA;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         initEvent();
         mPath = FileUtils.getRootPath() + File.separator + "camera123" + File.separator;
         boolean file = FileUtils.createDirs(mPath);
+
     }
 
 
@@ -69,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         mBinding.btTake.setOnClickListener(v -> {
 
             ImageCapture.OutputFileOptions build = new ImageCapture.OutputFileOptions.Builder(
-                    new File(mPath+System.currentTimeMillis()+".png")).build();
+                    new File(mPath + System.currentTimeMillis() + ".png")).build();
             mImageCapture.takePicture(build, ContextCompat.getMainExecutor(this), new ImageCapture.OnImageSavedCallback() {
                 @Override
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
@@ -79,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onError(@NonNull ImageCaptureException exception) {
-                    Log.i(TAG, "onError: "+exception.getMessage());
+                    Log.i(TAG, "onError: " + exception.getMessage());
                 }
             });
 
@@ -89,17 +82,19 @@ public class MainActivity extends AppCompatActivity {
             if (camera_mode == CameraSelector.DEFAULT_BACK_CAMERA)
                 camera_mode = CameraSelector.DEFAULT_FRONT_CAMERA;
             else
-                camera_mode =CameraSelector.DEFAULT_BACK_CAMERA;
+                camera_mode = CameraSelector.DEFAULT_BACK_CAMERA;
 
             startCamera();
 
         });
+
     }
 
     private void initPermission() {
         XXPermissions.with(this)
                 .permission(Permission.MANAGE_EXTERNAL_STORAGE)
                 .permission(Permission.CAMERA)
+                .permission(Permission.RECORD_AUDIO)
                 .request(new OnPermissionCallback() {
                     @Override
                     public void onGranted(List<String> permissions, boolean all) {
@@ -123,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    @SuppressLint("RestrictedApi")
+    @SuppressLint({"RestrictedApi", "UnsafeOptInUsageError"})
     private void startCamera() {
 
         ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(this);
@@ -132,21 +127,23 @@ public class MainActivity extends AppCompatActivity {
                 ProcessCameraProvider cameraProvider = future.get();
 
                 mPreview = new Preview.Builder().build();
-
+                mPreview.setTargetRotation(Surface.ROTATION_180);
                 mPreview.setSurfaceProvider(mBinding.preview.getSurfaceProvider());
 
                 int rotation = mBinding.img.getDisplay().getRotation();
-                Log.i(TAG, "startCamera: rotation:"+rotation);
+                Log.i(TAG, "startCamera: rotation:" + rotation);
                 ImageCapture.Builder builder = new ImageCapture.Builder();
                 //拍照用例
                 mImageCapture = builder
-                        .setTargetResolution(new Size(720,1280))
+                        .setTargetResolution(new Size(720, 1280))
+                        //.setTargetResolution(new Size(800,800))
                         .build();
 
                 CameraSelector cameraSelector = CameraSelector.Builder.fromSelector(camera_mode).build();
 
                 ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                         .setTargetResolution(new Size(720, 1280))
+                        //.setTargetResolution(new Size(800, 800))
                         //  0 不阻塞  1 阻塞
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         //.setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER)
@@ -195,13 +192,13 @@ public class MainActivity extends AppCompatActivity {
                         YUVUtils.rotateI420(dst_nv21,width,height,nv21_90,90);*/
                         //byte[] nv21_90 = NV21ToBitmap.rotateYUV420Degree90(dst_nv21, width, height);
 
-                       // Log.i(TAG, "analyze: image==>i420 耗时:" + (System.currentTimeMillis() - time) + "ms");
+                        // Log.i(TAG, "analyze: image==>i420 耗时:" + (System.currentTimeMillis() - time) + "ms");
 
                         byte[] dst_i420 = new byte[width * height * 3 / 2];
                         YUVUtils.NV21ToI420(dst_nv21, dst_i420, width, height);
 
                         byte[] dst_90 = new byte[width * height * 3 / 2];
-                        YUVUtils.rotateI420(dst_i420,width,height,dst_90,90);
+                        YUVUtils.rotateI420(dst_i420, width, height, dst_90, 90);
                         /*//左右镜像
                         byte[] mirror_l_r = new byte[width * height * 3 / 2];
                         YUVUtils.MirrorI420LeftRight(dst_90,height,width,mirror_l_r);*/
@@ -210,24 +207,24 @@ public class MainActivity extends AppCompatActivity {
                         YUVUtils.MirrorI420UpDown(dst_90,height,width,mirror_u_d);*/
                         //镜像
                         byte[] mirror = new byte[width * height * 3 / 2];
-                        YUVUtils.MirrorI420(dst_90,height,width,mirror);
+                        YUVUtils.MirrorI420(dst_90, height, width, mirror);
 
 
-                        byte[] nv21_90 =new byte[width * height * 3 / 2];
-                        YUVUtils.I420ToNv21(mirror,height,width,nv21_90);
+                        byte[] nv21_90 = new byte[width * height * 3 / 2];
+                        YUVUtils.I420ToNv21(mirror, height, width, nv21_90);
 
 
                         byte[] dst_180 = new byte[width * height * 3 / 2];
-                        YUVUtils.rotateI420(dst_i420,width,height,dst_180,180);
+                        YUVUtils.rotateI420(dst_i420, width, height, dst_180, 180);
 
-                        byte[] nv21_180 =new byte[width * height * 3 / 2];
-                        YUVUtils.I420ToNv21(dst_180,width,height,nv21_180);
+                        byte[] nv21_180 = new byte[width * height * 3 / 2];
+                        YUVUtils.I420ToNv21(dst_180, width, height, nv21_180);
 
                         byte[] dst_270 = new byte[width * height * 3 / 2];
-                        YUVUtils.rotateI420(dst_i420,width,height,dst_270,270);
+                        YUVUtils.rotateI420(dst_i420, width, height, dst_270, 270);
 
-                        byte[] nv21_270 =new byte[width * height * 3 / 2];
-                        YUVUtils.I420ToNv21(dst_270,height,width,nv21_270);
+                        byte[] nv21_270 = new byte[width * height * 3 / 2];
+                        YUVUtils.I420ToNv21(dst_270, height, width, nv21_270);
 
 
                         Bitmap bitmap = NV21ToBitmap.nv21ToBitmap(MainActivity.this, nv21_90, image.getHeight(), image.getWidth());
@@ -256,5 +253,11 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }, ContextCompat.getMainExecutor(this));
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
     }
 }
